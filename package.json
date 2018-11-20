@@ -1,5 +1,5 @@
 {
-  "name": "ving-webpack-plugin",
+  "name": "@ving/webpack-plugin",
   "version": "0.0.1",
   "main": "index.js",
   "repository": "https://github.com/vuing/ving-webpack-plugin",
