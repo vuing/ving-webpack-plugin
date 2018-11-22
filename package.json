@@ -6,6 +6,7 @@
   "author": "L-Chris <563303226@qq.com>",
   "license": "MIT",
   "dependencies": {
+    "chalk": "^2.4.1",
     "glob": "^7.1.3"
   }
 }

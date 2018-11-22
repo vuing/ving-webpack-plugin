@@ -1,56 +1,39 @@
 const fs = require('fs');
 const path = require('path');
 const glob = require('glob');
+const chalk = require('chalk');
 
 const pluginName = 'VingWebpackPlugin';
-const globalModules = ['store', 'route'];
-const commonModules = ['filter', 'directive', 'plugin', 'mixin'];
-
 const moduleOptions = [
   {
     name: 'store',
-    path: '..', // str regexp
-    fileName: 'store', // str regexp
-    outputFileName: 'stores'
+    isGlobal: true
   },
   {
     name: 'route',
-    path: '..', // str regexp
-    fileName: 'route', // str regexp
-    outputFileName: 'routes'
+    isGlobal: true
   },
   {
-    name: 'filter',
-    path: '..', // str regexp
-    fileName: 'filter', // str regexp
-    outputFileName: 'filters'
+    name: 'filter'
   },
   {
-    name: 'directive',
-    path: '..', // str regexp
-    fileName: 'directive', // str regexp
-    outputFileName: 'directives'
+    name: 'directive'
   },
   {
-    name: 'plugin',
-    path: '..', // str regexp
-    fileName: 'plugin', // str regexp
-    outputFileName: 'plugins'
+    name: 'plugin'
   },
   {
-    name: 'mixin',
-    path: '..', // str regexp
-    fileName: 'mixin', // str regexp
-    outputFileName: 'mixins'
+    name: 'mixin'
   }
-]
+];
 
 class VingWebpackPlugin {
   constructor ({
     base = 'src',
     prefix = '@',
-    types = moduleOptions.map(_ => ({ ..._, isGlobal: globalModules.includes(_.name) }))
+    types = moduleOptions
   } = {}) {
+    types = this.normalizeTypes(types);
     this.options = {
       base,
       prefix,
@@ -83,9 +66,13 @@ class VingWebpackPlugin {
     return code;
   }
 
-  createModule({ name, isGlobal, outputFileName }) {
+  createModule({ name, path, isGlobal, outputFileName }) {
     const regex = new RegExp(`([^\/]*)\.${name}\.js`);
-    const pathRegex = isGlobal ? `${this.base}/**/*.${name}.js` : `${this.base}/${outputFileName}/*.${name}.js`;
+    const pathRegex = path
+      ? path
+      : isGlobal
+      ? `${this.base}/**/*.${name}.js`
+      : `${this.base}/${outputFileName}/*.${name}.js`;
     const files = glob.sync(pathRegex).map(_ => {
       const key = regex.exec(_)[1]
       return {
@@ -96,6 +83,27 @@ class VingWebpackPlugin {
     const imports = this.createImport(files);
     const result = `{${files.map(_ => _.key).join(',')}}`;
     return `${imports}\n\nexport default ${result}`;
+  }
+
+  normalizeTypes (types) {
+    return types.map(({
+      name,
+      isGlobal = false,
+      fileName = name,
+      outputFileName = `${fileName}s`,
+      path
+    }) => {
+      if (!name) {
+        console.log(chalk.red('Name is needed in Type!'));
+        process.exit();
+      }
+      path = path
+        ? path
+        : isGlobal
+        ? `${this.base}/**/*.${name}.js`
+        : `${this.base}/${outputFileName}/*.${name}.js`;
+      return { name, isGlobal, fileName, outputFileName, path }
+    })
   }
 }
 
